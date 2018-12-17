@@ -1,19 +1,19 @@
 import os
 import gzip
 import numpy as np
-
-#dir_path = "data/fashion/"
+from sklearn.model_selection import train_test_split
 
 class Dataset(object):
 
-    def __init__(self, data_download_path="", verbose=False):
+    def __init__(self, data_download_path="", validation_flag=False, verbose=False):
         self.data_download_path = data_download_path
+        self.validation_flag=validation_flag
         self.verbose = verbose
 
-    def load_data(validation_set=False):
+    def load_data(self):
 
         if not os.path.exists(self.data_download_path):
-            raise ValueError('No "%s" directory found, keep data in the given directory path' %dir_path)
+            raise ValueError('No "%s" directory found, keep data in the given directory path' %self.data_download_path)
 
         if not os.path.exists(os.path.join(self.data_download_path,"train-images-idx3-ubyte.gz")):
             raise ValueError('No train images data found, Kindly download the data-set.')
@@ -44,7 +44,7 @@ class Dataset(object):
         with gzip.open(test_images_path) as test_imgpath:
             X_test = np.frombuffer(test_imgpath.read(), dtype=np.uint8, offset=16).reshape(len(y_test),784)
 
-        if validation_set:
+        if self.validation_flag:
             if self.verbose:
                 print("Dataset split is Train : 54k, Val: 6k, Test: 10k")
             X_train, X_val, y_train, y_val = train_test_split(X_train,
@@ -59,7 +59,7 @@ class Dataset(object):
 
         return X_train, X_test, y_train, y_test
 
-    def show_samples_in_grid(w=0, h=0):
+    def show_samples_in_grid(self, w=0, h=0):
         k = w*h
         for i in range(w):
             for j in range(h):
@@ -69,7 +69,7 @@ class Dataset(object):
                 k  = k + 1
         plt.show()
 
-    def create_label_dict():
+    def create_label_dict(self):
         label_dict = {
          0: 'T-shirt/top',
          1: 'Trouser',
