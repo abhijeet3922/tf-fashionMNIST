@@ -1,0 +1,3 @@
+Kindly download the fashion MNIST dataset in the directory 'data/fashion'
+
+There are 4 separate .gz files. Download link https://github.com/zalandoresearch/fashion-mnist#get-the-data
