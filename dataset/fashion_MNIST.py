@@ -1,6 +1,7 @@
 import os
 import gzip
 import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 
 class Dataset(object):
@@ -9,6 +10,12 @@ class Dataset(object):
         self.data_download_path = data_download_path
         self.validation_flag=validation_flag
         self.verbose = verbose
+        self.X_train = None
+        self.X_val = None
+        self.X_test = None
+        self.y_train = None
+        self.y_val = None
+        self.y_test = None
 
     def load_data(self):
 
@@ -52,11 +59,12 @@ class Dataset(object):
                                                       stratify = y_train,
                                                       test_size = 0.1,
                                                       random_state = 42)
+            self.X_train, self.X_val, self.X_test, self.y_train, self.y_val, self.y_test = X_train, X_val, X_test, y_train, y_val, y_test
             return X_train, X_val, X_test, y_train, y_val, y_test
 
         if self.verbose:
             print("Dataset split is Train : 60k, Val: 10k")
-
+        self.X_train, self.X_test, self.y_train, self.y_test = X_train, X_test, y_train, y_test
         return X_train, X_test, y_train, y_test
 
     def show_samples_in_grid(self, w=0, h=0):
@@ -64,7 +72,7 @@ class Dataset(object):
         for i in range(w):
             for j in range(h):
                 plt.subplot2grid((w,h),(i,j))
-                plt.imshow(X_train[k].reshape(28,28), cmap='Greys')
+                plt.imshow(self.X_train[k].reshape(28,28), cmap='Greys')
                 plt.axis('off')
                 k  = k + 1
         plt.show()
