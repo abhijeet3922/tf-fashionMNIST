@@ -25,16 +25,17 @@ I have downloaded the .gz files of train and test data along with labels from ht
 Each training and test example is assigned to one of the following labels:
 
 Label Description
-0 T-shirt/top
-1 Trouser
-2 Pullover
-3 Dress
-4 Coat
-5 Sandal
-6 Shirt
-7 Sneaker
-8 Bag
-9 Ankle boot
+
+* 0 T-shirt/top
+* 1 Trouser
+* 2 Pullover
+* 3 Dress
+* 4 Coat
+* 5 Sandal
+* 6 Shirt
+* 7 Sneaker
+* 8 Bag
+* 9 Ankle boot
 
 You can see the sample images in Fashion_MNIST_samples.png.
 
