@@ -154,7 +154,7 @@ def main(_):
     X_train, X_val, X_test, Y_train, Y_val, Y_test = fashion_mnist.load_data()
 
     # Showing few exapmle images from dataset in 2D grid
-    fashion_mnist.show_samples_in_grid(w=3,h=3)
+    fashion_mnist.show_samples_in_grid(w=10,h=10)
 
     # One hot encoding of labels for output layer training
     y_train =  one_hot(config.n_class, Y_train)
