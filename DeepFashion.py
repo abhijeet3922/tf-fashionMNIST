@@ -4,6 +4,7 @@ import numpy as np
 import tensorflow as tf
 from dataset import fashion_MNIST
 from util import config
+from progressbar import ProgressBar
 
 def model(batch_x):
 
@@ -111,8 +112,11 @@ def train(X_train, X_val, X_test, y_train, y_val, y_test, verbose = False):
             # calculate number of batches in dataset
             num_batches = np.round(X_train.shape[0]/config.batch_size).astype(int)
 
+            # For displaying progresbar
+            pbar = ProgressBar(term_width=80)
+
             # looping over batches of dataset
-            for i in range(num_batches):
+            for i in pbar(range(num_batches)):
 
                 # selecting batch data
                 batch_X = X_train[(i*config.batch_size):((i+1)*config.batch_size),:]
@@ -124,21 +128,26 @@ def train(X_train, X_val, X_test, y_train, y_val, y_test, verbose = False):
 
                 # summed up batch loss for whole epoch
                 epoch_loss += batch_loss
+
             # average epoch loss
             epoch_loss = epoch_loss/num_batches
-
+            # compute train accuracy
+            train_accuracy = float(accuracy.eval({X: X_train, Y: y_train}))
             # compute validation loss
             val_loss = sess.run(validation_loss, feed_dict = {X: X_val ,Y: y_val})
+            # compute validation accuracy
+            val_accuracy = float(accuracy.eval({X: X_val, Y: y_val}))
 
             # display within an epoch (train_loss, train_accuracy, valid_loss, valid accuracy)
             if verbose:
-                print("epoch:{epoch_num}, train_loss: {train_loss}, train_accuracy: {train_acc}, val_loss: {valid_loss}, val_accuracy: {val_acc} ".format(
-                                                       epoch_num = epoch,
-                                                       train_loss = round(epoch_loss,3),
-                                                       train_acc = round(float(accuracy.eval({X: X_train, Y: y_train})),2),
-                                                       valid_loss = round(float(val_loss),3),
-                                                       val_acc = round(float(accuracy.eval({X: X_val, Y: y_val})),2)
-                                                      ))
+                print("epoch:{epoch_num}, train_loss: {train_loss}, train_accuracy: {train_acc},"
+                 "val_loss: {valid_loss}, val_accuracy: {val_acc}".format(
+                 epoch_num = epoch,
+                 train_loss = round(epoch_loss,3),
+                 train_acc = round(train_accuracy,2),
+                 valid_loss = round(float(val_loss),3),
+                 val_acc = round(val_accuracy,2)
+                 ))
 
         # calculate final accuracy on never seen test data
         print ("Test Accuracy:", accuracy.eval({X: X_test, Y: y_test}))
