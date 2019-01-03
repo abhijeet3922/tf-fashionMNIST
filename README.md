@@ -39,4 +39,8 @@ Label Description
 
 You can see the sample images in Fashion_MNIST_samples.png.
 
+I have written couple of blog-posts illustrating this repository explaining tensorflow and neural network models.
+1. https://appliedmachinelearning.blog/2018/12/26/tensorflow-tutorial-from-scratch-building-a-deep-learning-model-on-fashion-mnist-dataset-part-1/
+2. https://appliedmachinelearning.blog/2019/01/01/tensorflow-tutorial-from-scratch-building-a-deep-learning-model-on-fashion-mnist-dataset-part-2/
+
 
