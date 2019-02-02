@@ -167,17 +167,22 @@ def train(X_train, X_val, y_train, y_val, verbose = False):
         sess.close()
 
 def test(X_test, y_test):
-
-    from tensorflow.python.tools.inspect_checkpoint import print_tensors_in_checkpoint_file
+    """
+    Evaluates accuracy on the test set using stored trained tensorflow model
+    """
     tf.reset_default_graph()
     saver = tf.train.import_meta_graph("model/model_fmnist_final.ckpt.meta")
 
     with tf.Session() as sess:
 
         saver.restore(sess, tf.train.latest_checkpoint("model"))
-        #latest_ckp = tf.train.latest_checkpoint('model')
-        #print_tensors_in_checkpoint_file(latest_ckp, all_tensors=True, tensor_name='')
 
+        # How to know all the tensor variables stored in the session ?
+        '''
+        from tensorflow.python.tools.inspect_checkpoint import print_tensors_in_checkpoint_file
+        latest_ckp = tf.train.latest_checkpoint('model')
+        print_tensors_in_checkpoint_file(latest_ckp, all_tensors=True, tensor_name='')
+        '''
         graph = tf.get_default_graph()
         h1 = graph.get_tensor_by_name("h1:0")
         b1 = graph.get_tensor_by_name("b1:0")
