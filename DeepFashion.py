@@ -23,6 +23,7 @@ def model(batch_x):
 
     The model consists of fully connected 2 hidden layers along with input and output layers.
     """
+    layers = {}
 
     b1 = tf.get_variable("b1", [config.n_hidden1], initializer = tf.zeros_initializer())
     h1 = tf.get_variable("h1", [config.n_input, config.n_hidden1],
@@ -39,7 +40,6 @@ def model(batch_x):
                          initializer = tf.contrib.layers.xavier_initializer())
 
     layer3 = tf.add(tf.matmul(layer2,h3),b3)
-
     return layer3
 
 
@@ -66,12 +66,20 @@ def create_optimizer():
 
 def one_hot(n_class, Y):
     """
-    return one hot encoded labels to train output layers of NN model
+    returns one hot encoded labels to train output layers of NN model
     """
     return np.eye(n_class)[Y]
 
+def fetch_batch(X_train, y_train, batch_index):
+    """
+    returns current batch to be executed
+    """
+    batch_X = X_train[(batch_index*config.batch_size):((batch_index+1)*config.batch_size),:]
+    batch_y = y_train[(batch_index*config.batch_size):((batch_index+1)*config.batch_size),:]
 
-def train(X_train, X_val, X_test, y_train, y_val, y_test, verbose = False):
+    return batch_X, batch_y
+
+def train(X_train, X_val, y_train, y_val, verbose = False):
     """
     Trains the network, also evaluates on test data finally.
     """
@@ -98,6 +106,8 @@ def train(X_train, X_val, X_test, y_train, y_val, y_test, verbose = False):
     # initialize all the global variables
     init = tf.global_variables_initializer()
 
+    saver = tf.train.Saver()
+
     # starting session to actually execute the computation graph
     with tf.Session() as sess:
 
@@ -106,6 +116,9 @@ def train(X_train, X_val, X_test, y_train, y_val, y_test, verbose = False):
 
         # looping over number of epochs
         for epoch in range(config.n_epoch):
+
+            if epoch % 10 == 0:
+                save_path = saver.save(sess,"checkpoints/model_fmnist.ckpt")
 
             epoch_loss = 0.
 
@@ -119,8 +132,7 @@ def train(X_train, X_val, X_test, y_train, y_val, y_test, verbose = False):
             for i in pbar(range(num_batches)):
 
                 # selecting batch data
-                batch_X = X_train[(i*config.batch_size):((i+1)*config.batch_size),:]
-                batch_y = y_train[(i*config.batch_size):((i+1)*config.batch_size),:]
+                batch_X, batch_y = fetch_batch(X_train, y_train, i)
 
                 # execution of dataflow computational graph of nodes optimizer, avg_loss
                 _, batch_loss = sess.run([optimizer, avg_loss],
@@ -132,11 +144,12 @@ def train(X_train, X_val, X_test, y_train, y_val, y_test, verbose = False):
             # average epoch loss
             epoch_loss = epoch_loss/num_batches
             # compute train accuracy
-            train_accuracy = float(accuracy.eval({X: X_train, Y: y_train}))
+            train_accuracy = sess.run(accuracy, feed_dict = {X: X_train, Y: y_train})
+
             # compute validation loss
             val_loss = sess.run(validation_loss, feed_dict = {X: X_val ,Y: y_val})
             # compute validation accuracy
-            val_accuracy = float(accuracy.eval({X: X_val, Y: y_val}))
+            val_accuracy = sess.run(accuracy, feed_dict = {X: X_val, Y: y_val})
 
             # display within an epoch (train_loss, train_accuracy, valid_loss, valid accuracy)
             if verbose:
@@ -144,13 +157,47 @@ def train(X_train, X_val, X_test, y_train, y_val, y_test, verbose = False):
                  "val_loss: {valid_loss}, val_accuracy: {val_acc}".format(
                  epoch_num = epoch,
                  train_loss = round(epoch_loss,3),
-                 train_acc = round(train_accuracy,2),
+                 train_acc = round(float(train_accuracy),2),
                  valid_loss = round(float(val_loss),3),
-                 val_acc = round(val_accuracy,2)
+                 val_acc = round(float(val_accuracy),2)
                  ))
 
-        # calculate final accuracy on never seen test data
-        print ("Test Accuracy:", accuracy.eval({X: X_test, Y: y_test}))
+        save_path = saver.save(sess, "model/model_fmnist_final.ckpt")
+
+        sess.close()
+
+def test(X_test, y_test):
+
+    from tensorflow.python.tools.inspect_checkpoint import print_tensors_in_checkpoint_file
+    tf.reset_default_graph()
+    saver = tf.train.import_meta_graph("model/model_fmnist_final.ckpt.meta")
+
+    with tf.Session() as sess:
+
+        saver.restore(sess, tf.train.latest_checkpoint("model"))
+        #latest_ckp = tf.train.latest_checkpoint('model')
+        #print_tensors_in_checkpoint_file(latest_ckp, all_tensors=True, tensor_name='')
+
+        graph = tf.get_default_graph()
+        h1 = graph.get_tensor_by_name("h1:0")
+        b1 = graph.get_tensor_by_name("b1:0")
+        h2 = graph.get_tensor_by_name("h2:0")
+        b2 = graph.get_tensor_by_name("b2:0")
+        h3 = graph.get_tensor_by_name("h3:0")
+        b3 = graph.get_tensor_by_name("b3:0")
+
+        # Creating place holders for image data and its labels
+        X = tf.placeholder(tf.float32, [None, 784], name="X")
+        Y = tf.placeholder(tf.float32, [None, 10], name="Y")
+
+        logits = tf.add(tf.matmul(tf.nn.relu(tf.add(tf.matmul(tf.nn.relu(tf.add(tf.matmul(X,h1),b1)),h2),b2)),h3),b3)
+
+        # evaluating accuracy on various data (train, val, test) set
+        correct_prediction = tf.equal(tf.argmax(logits,1), tf.argmax(Y,1))
+        accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
+
+        test_accuracy = sess.run(accuracy, feed_dict = {X: X_test, Y: y_test})
+        print("Test Accuracy:",test_accuracy)
         sess.close()
 
 
@@ -171,8 +218,8 @@ def main(_):
     y_test = one_hot(config.n_class, Y_test)
 
     # Let's train and evaluate the fully connected NN model
-    train(X_train, X_val, X_test, y_train, y_val, y_test, True)
-
+    train(X_train, X_val, y_train, y_val, True)
+    test(X_test, y_test)
 
 
 if __name__ == '__main__' :
